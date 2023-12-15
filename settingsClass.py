@@ -67,16 +67,28 @@ class ScannerSettings:
         """
         # TODO
         pass
-class AppSettings:
+
+
+class AppSettings(ScannerSettings):
     """
     This class is for all the selections that can be done in the GUI. This should then be used to generate objects of
     ScannerSettings class that will be used to generate SANE api calls
     """
-    def __init__(self, grid_size=2, output_type="jpeg", jpeg_compression=95, scan_number=4,
+    def __init__(self, scanmode="Color", depth=8, halftoning="None", dropout="None", brightness=0, sharpness=0,
+                 gamma_correction="Default", color_correction="No correction", out_resolution=4800,
+                 threshold=100.0, mirror="no", auto_area_segmentation="yes", wait_for_button="no",
+                 cct=None, preview="no", geometry=None, source="Flatbed",
+                 auto_eject="no", film_type="Negative Film", focus_position="Focus on glass", bay=0, eject="no",
+                 adf_mode="simplex", grid_size=2, output_type="jpeg", jpeg_compression=95, scan_number=4,
                  json_export="settings.json", roi=None
                  ):
         if roi is None:
             roi = [0, 0, 150, 150]
+
+        # Call Constructor of Parent class with inherited settings
+        super().__init__(scanmode, depth, halftoning, dropout, brightness, sharpness, gamma_correction,
+                         color_correction, out_resolution, threshold, mirror, auto_area_segmentation, wait_for_button,
+                         cct, preview, geometry, source, auto_eject, film_type, focus_position, bay, eject, adf_mode)
 
         # ---------- Following Variables are for settings selected for output and other things ----------------------
 
@@ -87,21 +99,39 @@ class AppSettings:
         # self.png_setting = "PLACEHOLDER"          # TODO After implementing PNG export
         self.scan_number = scan_number  # The number of scans that would need to be performed for the selected subscan grid
         self.json_export = json_export  # The export path for the exported json
+        self.roi = roi
 
     def update_scan_number(self):
         self.scan_number = self.grid_size * self.grid_size
 
+    def gen_scan_class(self):
+        scan_obj_list = []
+        if(self.scan_number == 4):      # implement for 9 or a general number of scan number later if needed
+            for i in range(self.scan_number):
+                if i == 0:
+                    call_geometry = [self.roi[0], self.roi[1], self.roi[0] + (self.roi[2] - self.roi[0]) / 2, self.roi[1] + (self.roi[3] - self.roi[1]) / 2]
+                elif i == 1:
+                    call_geometry = [self.roi[0] + (self.roi[2] - self.roi[0]) / 2, self.roi[1], self.roi[2], self.roi[1] + (self.roi[3] - self.roi[0]) / 2]
+                elif i == 2:
+                    call_geometry = [self.roi[0], self.roi[0] + (self.roi[3] - self.roi[1]) / 2, self.roi[1] + (self.roi[2] - self.roi[0]) / 2, self.roi[3]]
+                elif i == 3:
+                    call_geometry = [self.roi[0] + (self.roi[2] - self.roi[0]) / 2, self.roi[1] + (self.roi[3] - self.roi[1]) / 2, self.roi[2], self.roi[3]]
+                scan_obj_list.append(ScannerSettings(scanmode="Color", depth=8, halftoning="None", dropout="None", brightness=0, sharpness=0,
+                 gamma_correction="Default", color_correction="No correction", out_resolution=4800,
+                 threshold=100.0, mirror="no", auto_area_segmentation="yes", wait_for_button="no",
+                 cct=None, preview="no", geometry=call_geometry, source="Flatbed",
+                 auto_eject="no", film_type="Negative Film", focus_position="Focus on glass", bay=0, eject="no",
+                 adf_mode="simplex"))
+        return scan_obj_list
 
 
-"""
-test = HexScan()
+test = AppSettings()
 test.exportConfiguration()
 test.scanmode = "Grayscale"
 print(test.__dict__)
 testread = open("settings.json", 'r')
 testjsonread = json.load(testread)
-readobj = HexScan(**testjsonread)
+readobj = AppSettings(**testjsonread)
 print(testjsonread)
 print(readobj.__dict__)
 test.scanmode = "Grayscale"
-"""
