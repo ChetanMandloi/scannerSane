@@ -12,7 +12,7 @@ BRIGHTNESS = False
 SHARPNESS = True
 GAMMA_CORR_ON = False
 OUT_RES_ON = True
-THRESHOLD_ON = True
+THRESHOLD_ON = False
 MIRROR_ON = False
 AUTO_SEGMEN_ON = False
 BUTTON_WAIT_ON = False
@@ -33,21 +33,21 @@ import numpy
 from PIL import Image
 
 class ScannerSettings:
-    def __init__(self, sane_object=None,
+    def __init__(self,
                  scanmode="Color", depth=8, halftoning="None", dropout="None", brightness=0, sharpness=0,
-                 gamma_correction="Default", color_correction="No correction", out_resolution=4800,
+                 gamma_correction="Default", color_correction="No correction", out_resolution=1200,
                  threshold=100.0, mirror="no", auto_area_segmentation="yes", wait_for_button="no",
                  cct=None, preview="no", geometry=None, source="Flatbed",
                  auto_eject="no", film_type="Negative Film", focus_position="Focus on glass", bay=0, eject="no",
-                 adf_mode="simplex"
+                 adf_mode="simplex", sane_port=None
                  ):
         if geometry is None:
             geometry = [0, 0, 75, 75]
         if cct is None:
             cct = [0, 0, 0, 0, 0, 0, 0, 0, 0]
         # --------------------- These variables are for generating SANE api calls. ------------------------------
-        self.sane_object = sane_object
-        self.scanmode = scanmode                    # Binary, Gray, Color , lineart, Monochrome Depending on scanner. check saneobject.opt after opening for details
+        self.sane_port = sane_port
+        self.scanmode = scanmode                    # Binary, Gray, Color , lineart, Monochrome Depending on scanner. check sane_port.opt after opening for details
         self.depth = depth                          # 8, 12, 14 bits colors per channel
         self.halftoning = halftoning                # Valid  options  are  "None",  "Halftone  A  (Hard  Tone)", "Halftone  B  (Soft Tone)", "Halftone C (Net Screen)", "Dither A(4x4 Bayer)", "Dither  B  (4x4  Spiral)",  "Dither  C  (4x4  Net Screen)",  "Dither  D (8x4 Net Screen)", "Text Enhanced Technology", "Download pattern A", and "Download pattern B".
         self.dropout = dropout                      # Dropout color used for monochrome scanning. The selected color is not scanned. Can be used to scan an original with a colored background
@@ -59,7 +59,7 @@ class ScannerSettings:
         self.threshold = threshold                  # float from 0.0 to 100.0selects minimum brightness to get a white point
         self.mirror = mirror                        # If the image is laterally inverted or not
         self.auto_area_segmentation = auto_area_segmentation  # Image areas will be halftoned, text should be crispier with yes. read more
-        # self.red_gamma_table = "PLACEHOLDER"      #TODO implement gamma table
+        # self.red_gamma_table = "PLACEHOLDER"      #TODO After seeing if gamma table is supported or needed.
         # self.green_gamma_table = "PLACEHOLDER"    #
         # self.blue_gamma_table = "PLACEHOLDER"     #
         self.wait_for_button = wait_for_button      # Start scan only when button on scanner is pressed
@@ -78,55 +78,56 @@ class ScannerSettings:
         """
             Generate pySane api calls based on current arguments and settings passed on to the object.
             A lot of options will have different parameter names. To get valid options, open a sane object connecting to
-            the scanner and use saneobject.getoptions() and saneobject.opt variable output to know all valid active objects
+            the scanner and use sane_port.getoptions() and sane_port.opt variable output to know all valid active objects
             After checking there, update the variables here
-            Non-selectable or non-existent options defined here will NOT generate an error but also WON"T WORK.
+            Non-existent options defined here will NOT generate an error but also WON"T WORK.
+            Inactive but existing options however WILL generate an error.
         """
-        if self.sane_object == None:
+        if self.sane_port == None:
             print("No Valid Opened sane port detected")
         if SCANMODE_ON:
-            self.sane_object.mode = self.scanmode  # Exact Option name may vary a bit, check in cli using sane.opt
+            self.sane_port.mode = self.scanmode  # Exact Option name may vary a bit, check in cli using sane.opt
         if DEPTH_ON:
-            self.sane_object.depth = self.depth
+            self.sane_port.depth = self.depth
         if HALFTONING_ON:
-            self.sane_object.halftoning = self.halftoning
+            self.sane_port.halftoning = self.halftoning
         if DROPOUT_ON:
-            self.sane_object.dropout = self.dropout
+            self.sane_port.dropout = self.dropout
         if BRIGHTNESS:
-            self.sane_object.brightness = self.brightness
+            self.sane_port.brightness = self.brightness
         if SHARPNESS:
-            self.sane_object.sharpness = self.sharpness
+            self.sane_port.sharpness = self.sharpness
         if GAMMA_CORR_ON:
-            self.sane_object.gamma_correction = self.gamma_correction
+            self.sane_port.gamma_correction = self.gamma_correction
         if OUT_RES_ON:
-            self.sane_object.resolution = self.out_resolution               # Some scanners might have seperate output and optical resoltuions. check in options for the scanner
+            self.sane_port.resolution = self.out_resolution               # Some scanners might have seperate output and optical resoltuions. check in options for the scanner
         if THRESHOLD_ON:
-            self.sane_object.threshold = self.threshold
+            self.sane_port.threshold = self.threshold
         if MIRROR_ON:
-            self.sane_object.mirror = self.mirror
+            self.sane_port.mirror = self.mirror
         if AUTO_SEGMEN_ON:
-            self.sane_object.auto_area_segmentation = self.auto_area_segmentation
+            self.sane_port.auto_area_segmentation = self.auto_area_segmentation
         if BUTTON_WAIT_ON:
-            self.sane_object.button_wait = self.wait_for_button
+            self.sane_port.button_wait = self.wait_for_button
         if CCT_ON:
-            self.sane_object.CCT = self.cct
+            self.sane_port.CCT = self.cct
         if GEOMETRY_ON:
-            self.sane_object.tl_x = self.geometry[0]
-            self.sane_object.tl_y = self.geometry[1]
-            self.sane_object.br_x = self.geometry[2]
-            self.sane_object.br_y = self.geometry[3]
+            self.sane_port.tl_x = self.geometry[0]
+            self.sane_port.tl_y = self.geometry[1]
+            self.sane_port.br_x = self.geometry[2]
+            self.sane_port.br_y = self.geometry[3]
         if SOURCE_ON:
-            self.sane_object.source = self.source
+            self.sane_port.source = self.source
         if AUTO_EJECT_ON:
-            self.sane_object.autoEject = self.auto_eject
+            self.sane_port.autoEject = self.auto_eject
         if FILM_TYPE_ON:
-            self.sane_object.film_type = self.film_type
+            self.sane_port.film_type = self.film_type
         if FOCUS_ON:
-            self.sane_object.focus = self.focus_position
+            self.sane_port.focus = self.focus_position
         if BAY_ON:
-            self.sane_object.bay = self.bay
+            self.sane_port.bay = self.bay
         if ADFMODE_ON:
-            self.sane_object.adf_mode = self.adf_mode
+            self.sane_port.adf_mode = self.adf_mode
 
     def test_scan_pil(self):
         """
@@ -136,8 +137,8 @@ class ScannerSettings:
         """
         try:
             self.set_scan_call_settings()
-            self.sane_object.start()
-            test_img = self.sane_object.snap()
+            self.sane_port.start()
+            test_img = self.sane_port.snap()
             test_img.save('test_image_pil.png')
             return 0
         except:
@@ -150,9 +151,9 @@ class ScannerSettings:
         :return: 0 if no error, -1 if there is some error.
         """
         try:
-            params = self.sane_object.get_parameters()
-            self.sane_object.start()
-            arr = self.sane_object.arr_snap()
+            params = self.sane_port.get_parameters()
+            self.sane_port.start()
+            arr = self.sane_port.arr_snap()
             print("Array shape: %s, size: %d, type: %s, range: %d-%d, mean: %.1f, stddev: ""%.1f" % (repr(arr.shape),
                                                 arr.size, arr.dtype, arr.min(), arr.max(), arr.mean(), arr.std()))
             if arr.dtype == numpy.uint16:
@@ -175,7 +176,7 @@ class ScannerSettings:
         Closes the sane port recieved and scanning or required transactions are done
         :return:
         """
-        self.sane_object.close()
+        self.sane_port.close()
 
 
 
@@ -185,11 +186,11 @@ class AppSettings(ScannerSettings):
     ScannerSettings class that will be used to generate SANE api calls
     """
     def __init__(self, scanmode="Color", depth=8, halftoning="None", dropout="None", brightness=0, sharpness=0,
-                 gamma_correction="Default", color_correction="No correction", out_resolution=4800,
+                 gamma_correction="Default", color_correction="No correction", out_resolution=1200,
                  threshold=100.0, mirror="no", auto_area_segmentation="yes", wait_for_button="no",
                  cct=None, preview="no", geometry=None, source="Flatbed",
                  auto_eject="no", film_type="Negative Film", focus_position="Focus on glass", bay=0, eject="no",
-                 adf_mode="simplex", grid_size=2, output_type="jpeg", jpeg_compression=95, scan_number=4,
+                 adf_mode="simplex", sane_port=None, grid_size=2, output_type="jpeg", jpeg_compression=95, scan_number=4,
                  json_export="settings.json", roi=None
                  ):
         if roi is None:
@@ -198,7 +199,7 @@ class AppSettings(ScannerSettings):
         # Call Constructor of Parent class with inherited settings
         super().__init__(scanmode, depth, halftoning, dropout, brightness, sharpness, gamma_correction,
                          color_correction, out_resolution, threshold, mirror, auto_area_segmentation, wait_for_button,
-                         cct, preview, geometry, source, auto_eject, film_type, focus_position, bay, eject, adf_mode)
+                         cct, preview, geometry, source, auto_eject, film_type, focus_position, bay, eject, adf_mode, sane_port)
 
         # ---------- Following Variables are for settings selected for output and other things ----------------------
 
@@ -210,6 +211,7 @@ class AppSettings(ScannerSettings):
         self.scan_number = scan_number  # The number of scans that would need to be performed for the selected subscan grid
         self.json_export = json_export  # The export path for the exported json
         self.roi = roi
+        self.sane_port = sane_port
 
 
     def update_scan_number(self):
@@ -247,17 +249,27 @@ class AppSettings(ScannerSettings):
                  threshold=100.0, mirror="no", auto_area_segmentation="yes", wait_for_button="no",
                  cct=None, preview="no", geometry=call_geometry, source="Flatbed",
                  auto_eject="no", film_type="Negative Film", focus_position="Focus on glass", bay=0, eject="no",
-                 adf_mode="simplex"))
+                 adf_mode="simplex", sane_port=self.sane_port))
         self.scan_objs = scan_obj_list
         return scan_obj_list
 
+class intialise_sane():
+    def __init__(self, device_num=0):
+        self.device_num = device_num
+        self.sane_init = sane.init()
+        self.sane_devices = sane.get_devices()
+        print(self.sane_devices)
+        self.sane_port = sane.open(self.sane_devices[0][0])
+    def genSanePort(self):
+        return self.sane_port
 
 
-test = AppSettings()
-print(test.gen_scan_class()[0].geometry)
-print(test.gen_scan_class()[1].geometry)
-print(test.gen_scan_class()[2].geometry)
-print(test.gen_scan_class()[3].geometry)
+myport = intialise_sane(device_num=2)
+test = AppSettings(sane_port=myport.sane_port)
+test.gen_scan_class()
+print(test.scan_objs[0].geometry)
+test.scan_objs[0].set_scan_call_settings()
+
 
 
 """
