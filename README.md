@@ -4,6 +4,7 @@ Implementation of SANE api under a python wrapper and a PyQt GUI for scanning pa
 DONE:
 
     Created a dummy GUI interface.
+    Detect hexaboard and mark region of interest.
     Testd SANE calls to get devices, options and open ports to issue commands etc.
     Created Classes to store settings for generating API calls and storing other scanner settings
     Export and import the above class objects to json to save and load settings selected.
@@ -12,6 +13,7 @@ DONE:
 TODO:
 
     Add application logic to pyqt elements in gui.
+    Integrate all pieces together into functioning module within gui.
     Start binding SANE calls to the gui elements to be executed in seperate worker threads.
     Implement different output file types along with relevant settings needed. Implement the changes to gui
     Implement a method to select ROI from gui.
