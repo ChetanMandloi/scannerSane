@@ -42,8 +42,9 @@ def get_contours(img, img_contour):
       # Approximate what type of shape this is
       approx = cv2.approxPolyDP(cnt, 0.01 * param, True)
       shape, x, y, w, h = find_shape(approx)
-      cv2.putText(img_contour, shape, (x+78, y+200), cv2.FONT_HERSHEY_COMPLEX, .7, (255, 0, 255), 1)
-      cv2.rectangle(img_contour, (x-10, y-10), (x + w + 10, y + h + 10), (255, 0, 0), 2)
+      if shape == "Hexagon":
+        cv2.putText(img_contour, "Region Of Interest", (x+48, y+80), cv2.FONT_HERSHEY_COMPLEX, .7, (255, 0, 255), 1)
+        cv2.rectangle(img_contour, (x-10, y-10), (x + w + 10, y + h + 10), (255, 0, 0), 2)
 
   return approx, param, img_contour, contours, cnt
 
